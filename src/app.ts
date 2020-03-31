@@ -5,13 +5,28 @@ import cors from "cors";
 import { Entry } from "./type";
 import { mapOwn } from "./util";
 
-let data: Entry[];
-csv(
-  fs.readFileSync("./csv/bed_50contact.csv"),
-  { columns: true },
-  (err, output) => {
-    data = output;
-  }
+let db: { [key: string]: Entry[] } = {};
+[
+  {
+    key: "data50",
+    file: "bed_50contact.csv",
+  },
+  {
+    key: "data75",
+    file: "bed_75contact.csv",
+  },
+  {
+    key: "data100",
+    file: "bed_nointervention.csv",
+  },
+].forEach(item =>
+  csv(
+    fs.readFileSync(`./csv/${item.file}`),
+    { columns: true },
+    (err, output) => {
+      db[item.key] = output;
+    }
+  )
 );
 
 const app = express();
@@ -25,7 +40,7 @@ app.get("/", (req, res) => {
 app.get("/map", (req, res) => {
   let m: { [key: string]: number } = {};
   const field: string = req.query.field;
-  data
+  db[`data${req.query.contact}`]
     .filter(row => row.Date === req.query.date)
     .forEach(row => {
       const parts = row.county.split(" ");
