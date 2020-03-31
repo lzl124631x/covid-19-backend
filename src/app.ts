@@ -21,16 +21,17 @@ const HTTP_PORT = 8080;
 app.get("/", (req, res) => {
   res.send("Express is up!");
 });
+
 app.get("/map", (req, res) => {
   let m: { [key: string]: number } = {};
-  console.log(req.query.date);
+  const field: string = req.query.field;
   data
     .filter(row => row.Date === req.query.date)
     .forEach(row => {
       const parts = row.county.split(" ");
       const state = `us-${parts[parts.length - 1].toLocaleLowerCase()}`;
       if (!(state in m)) m[state] = 0;
-      m[state] += +row.hosp_need_50;
+      m[state] += +row[field];
     });
 
   res.send(mapOwn(m, (val, key) => [key, val]));

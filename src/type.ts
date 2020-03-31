@@ -22,4 +22,5 @@ export interface Entry {
   death_50: string;
   death_75: string;
   "death_97.5": string;
+  [key: string]: string;
 }
