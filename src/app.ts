@@ -31,7 +31,7 @@ let db: { [key: string]: Entry[] } = {};
 
 const app = express();
 app.use(cors());
-const HTTP_PORT = 8080;
+const HTTP_PORT = 6789;
 
 app.get("/", (req, res) => {
   res.send("Express is up!");
