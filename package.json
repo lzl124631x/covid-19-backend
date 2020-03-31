@@ -1,0 +1,26 @@
+{
+  "name": "covid-19-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lzl124631x/covid-19-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lzl124631x/covid-19-backend/issues"
+  },
+  "homepage": "https://github.com/lzl124631x/covid-19-backend#readme",
+  "devDependencies": {
+    "@types/express": "^4.17.3",
+    "express": "^4.17.1",
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.8.3"
+  }
+}
