@@ -1,4 +1,14 @@
 import express from "express";
+import csv from "csv-parse";
+import fs from "fs";
+
+csv(
+  fs.readFileSync("./csv/bed_50contact.csv"),
+  { columns: true },
+  (err, output) => {
+    console.log(output[1]);
+  }
+);
 
 const app = express();
 
