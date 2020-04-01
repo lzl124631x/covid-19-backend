@@ -6,7 +6,7 @@ import { Entry } from "./type";
 import { mapOwn } from "./util";
 
 let db: { [key: string]: Entry[] } = {};
-[
+const csvFiles = [
   {
     key: "data50",
     file: "bed_50contact.csv",
@@ -19,7 +19,9 @@ let db: { [key: string]: Entry[] } = {};
     key: "data100",
     file: "bed_nointervention.csv",
   },
-].forEach(item =>
+];
+
+csvFiles.forEach(item =>
   csv(
     fs.readFileSync(`./csv/${item.file}`),
     { columns: true },
@@ -35,6 +37,13 @@ const HTTP_PORT = 6789;
 
 app.get("/", (req, res) => {
   res.send("Express is up!");
+});
+
+app.get("/dates", (req, res) => {
+  let m: { [key: string]: number } = {};
+  db[csvFiles[0].key].forEach(row => (m[row.Date] = 1));
+  const dates = Object.keys(m);
+  res.send(dates);
 });
 
 app.get("/map", (req, res) => {
