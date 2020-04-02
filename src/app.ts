@@ -2,8 +2,9 @@ import express from "express";
 import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
-import { Entry } from "./type";
-import { mapOwn } from "./util";
+import { Entry, PERCENTILEGROUPS } from "./type";
+import { mapOwn, ToSeries } from "./util";
+import { IStackedChart } from "./stackedchart/IStackedChart";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -60,6 +61,33 @@ app.get("/map", (req, res) => {
 
   res.send(mapOwn(m, (val, key) => [key, val]));
 });
+
+app.get("/stackedchart", (req, res) => {
+  const rowsGroupedByDate: Map<string, Entry[]> = new Map<string, Entry[]>();
+  db[`data${req.query.contact}`].forEach(row => {
+    if (rowsGroupedByDate.has(row.Date)) {
+      const _toAppend = rowsGroupedByDate.get(row.Date)
+      _toAppend.push(row);
+      rowsGroupedByDate.set(row.Date, _toAppend);
+    } else {
+      rowsGroupedByDate.set(row.Date, [row]);
+    }
+  })
+
+  const allCharts: any[] = [];
+  PERCENTILEGROUPS.forEach(group => {
+    const stackedChart: IStackedChart = {
+      categories: Array.from(rowsGroupedByDate.keys()),
+      title: group.title,
+      xAxisLabel: group.xAxisLabel,
+      yAxisLabel: group.yAxisLabel,
+      series: ToSeries(group.charts, rowsGroupedByDate)
+    }
+    allCharts.push({...stackedChart, resourceType: group.resourceType});
+  })
+  const response = allCharts.filter(chart => chart.resourceType == req.query.resourceType);
+  res.send(response);
+})
 
 app.listen(HTTP_PORT, () => {
   console.log(`Express HTTP server listening on port ${HTTP_PORT}`);
