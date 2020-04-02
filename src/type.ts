@@ -19,6 +19,10 @@ export const PERCENTILEGROUPS = [
     {
       name: "75 percentile",
       column: "hosp_need_75"
+    },
+    {
+      name: "97.5 percentile",
+      column: "hosp_need_97.5"
     }],
   },
   {
@@ -41,6 +45,10 @@ export const PERCENTILEGROUPS = [
     {
       name: "75 percentile",
       column: "vent_need_75"
+    },
+    {
+      name: "97.5 percentile",
+      column: "vent_need_97.5"
     }],
   },
   {
@@ -63,6 +71,10 @@ export const PERCENTILEGROUPS = [
     {
       name: "75 percentile",
       column: "ICU_need_75"
+    },
+    {
+      name: "97.5 percentile",
+      column: "ICU_need_97.5"
     }],
   },
   {
@@ -85,6 +97,10 @@ export const PERCENTILEGROUPS = [
     {
       name: "75 percentile",
       column: "death_75"
+    },
+    {
+      name: "97.5 percentile",
+      column: "death_97.5"
     }],
   }
 ];
