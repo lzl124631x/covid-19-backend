@@ -1,6 +1,6 @@
 export const PERCENTILEGROUPS = [
   {
-    resourceType: "beds",
+    type: "beds",
     title: "Hospital beds needed",
     xAxisLabel: "Dates",
     yAxisLabel: "Number of beds",
@@ -22,7 +22,7 @@ export const PERCENTILEGROUPS = [
     }],
   },
   {
-    resourceType: "ventilators",
+    type: "ventilators",
     title: "Ventilators needed",
     xAxisLabel: "Dates",
     yAxisLabel: "Number of ventilators",
@@ -44,7 +44,7 @@ export const PERCENTILEGROUPS = [
     }],
   },
   {
-    resourceType: "icus",
+    type: "icus",
     title: "ICU's needed",
     xAxisLabel: "Dates",
     yAxisLabel: "Number of icu's",
@@ -66,7 +66,7 @@ export const PERCENTILEGROUPS = [
     }],
   },
   {
-    resourceType: "deaths",
+    type: "deaths",
     title: "Deaths",
     xAxisLabel: "Dates",
     yAxisLabel: "Number of deaths",

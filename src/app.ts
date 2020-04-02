@@ -3,8 +3,8 @@ import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
 
-import { mapOwn, ToSeries } from "./util";
-import { IStackedChart } from "./stackedchart/IStackedChart";
+import { mapOwn, toSeries } from "./util";
+import { StackedChartData } from "./stackedchart/StackedChart";
 import { Entry,PERCENTILEGROUPS, MapDataEntry, MapData } from "./type";
 
 let db: { [key: string]: Entry[] } = {};
@@ -87,16 +87,15 @@ app.get("/stackedchart", (req, res) => {
     }
   })
 
-  const allCharts: any[] = [];
-  PERCENTILEGROUPS.forEach(group => {
-    const stackedChart: IStackedChart = {
-      categories: Array.from(rowsGroupedByDate.keys()),
+  const allCharts: any[] = PERCENTILEGROUPS.map(group => {
+    const stackedChart: StackedChartData = {
+      xAxisData: Array.from(rowsGroupedByDate.keys()),
       title: group.title,
       xAxisLabel: group.xAxisLabel,
       yAxisLabel: group.yAxisLabel,
-      series: ToSeries(group.charts, rowsGroupedByDate)
+      charts: toSeries(group.charts, rowsGroupedByDate)
     }
-    allCharts.push({...stackedChart, resourceType: group.resourceType});
+    return {...stackedChart, type: group.type};
   })
   const response = allCharts.filter(chart => chart.resourceType == req.query.resourceType);
   res.send(response);
