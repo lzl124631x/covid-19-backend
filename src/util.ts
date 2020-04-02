@@ -1,5 +1,5 @@
-import { Entry, IChartSeriesMetadata } from "./type";
-import { ChartData } from "./stackedchart/StackedChart";
+import { Entry } from "./type";
+import { ChartData, ChartSeriesMetadata } from "./models/stackedchart";
 
 export function forOwn<T>(
   obj: { [key: string]: T },
@@ -21,7 +21,7 @@ export function mapOwn<T>(
   return arr;
 }
 
-export function toSeries(charts: IChartSeriesMetadata[], rowsGroupedByDate: Map<string, Entry[]>): ChartData[] {
+export function toSeries(charts: ChartSeriesMetadata[], rowsGroupedByDate: Map<string, Entry[]>): ChartData[] {
   const output: ChartData[] = [];
   charts.forEach(chart => {
     const data: number[] = Array.from(rowsGroupedByDate.values())

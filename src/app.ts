@@ -4,8 +4,9 @@ import fs from "fs";
 import cors from "cors";
 
 import { mapOwn, toSeries } from "./util";
-import { StackedChartData } from "./stackedchart/StackedChart";
-import { Entry,PERCENTILEGROUPS, MapDataEntry, MapData } from "./type";
+import { StackedChartData } from "./models/stackedchart";
+import { Entry, MapDataEntry, MapData } from "./type";
+import { PERCENTILEGROUPS } from "./chartconfiguration/stackedchartconfiguration";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
