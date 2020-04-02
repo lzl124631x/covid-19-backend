@@ -2,7 +2,7 @@ import express from "express";
 import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
-import { Entry } from "./type";
+import { Entry, MapDataEntry, MapData } from "./type";
 import { mapOwn } from "./util";
 
 let db: { [key: string]: Entry[] } = {};
@@ -47,18 +47,30 @@ app.get("/dates", (req, res) => {
 });
 
 app.get("/map", (req, res) => {
-  let m: { [key: string]: number } = {};
+  let mapByDate: { [key: string]: Entry[] } = {};
   const field: string = req.query.field;
-  db[`data${req.query.contact}`]
-    .filter(row => row.Date === req.query.date)
-    .forEach(row => {
-      const parts = row.county.split(" ");
+  db[`data${req.query.contact}`].forEach(row => {
+    if (!(row.Date in mapByDate)) mapByDate[row.Date] = [];
+    mapByDate[row.Date].push(row);
+  });
+  const data: MapDataEntry[] = mapOwn(mapByDate, (entries, date) => {
+    let mapByState: { [key: string]: number } = {};
+    entries.forEach(entry => {
+      const parts = entry.county.split(" ");
       const state = `us-${parts[parts.length - 1].toLocaleLowerCase()}`;
-      if (!(state in m)) m[state] = 0;
-      m[state] += +row[field];
+      if (!(state in mapByState)) mapByState[state] = 0;
+      mapByState[state] += +entry[field];
     });
-
-  res.send(mapOwn(m, (val, key) => [key, val]));
+    return [date, mapOwn(mapByState, (val, state) => [state, val])];
+  });
+  let maxValue = 0;
+  data.forEach(entry =>
+    entry[1].forEach(state => (maxValue = Math.max(maxValue, state[1])))
+  );
+  res.send({
+    data,
+    maxValue,
+  } as MapData);
 });
 
 app.listen(HTTP_PORT, () => {
