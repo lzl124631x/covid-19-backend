@@ -7,10 +7,8 @@ import { mapOwn, toSeries } from "./util";
 import { StackedChartData } from "./models/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { PERCENTILEGROUPS } from "./chartconfiguration/stackedchartconfiguration";
-import { FipsData } from "./models/fipsdata";
 
 let db: { [key: string]: Entry[] } = {};
-let fipsdata: FipsData[] = [];
 const csvFiles = [
   {
     key: "data50",
@@ -25,17 +23,6 @@ const csvFiles = [
     file: "bed_nointervention.csv",
   },
 ];
-
-csv(fs.readFileSync(`./csv/fips.csv`), { columns: true }, (err, output) => {
-  fipsdata = Array.from<any>(output).map(row => {
-    const _tranform: FipsData = {
-      stateName: row.state_name,
-      stateCode: row.state_code,
-      fipsCode: row.fips_code,
-    };
-    return _tranform;
-  });
-});
 
 csvFiles.forEach(item =>
   csv(
@@ -53,10 +40,6 @@ const HTTP_PORT = 6789;
 
 app.get("/", (req, res) => {
   res.send("Express is up!");
-});
-
-app.get("/fips-data", (req, res) => {
-  res.send(fipsdata);
 });
 
 app.get("/dates", (req, res) => {
@@ -95,11 +78,11 @@ app.get("/map", (req, res) => {
 
 app.get("/stacked-chart", (req, res) => {
   const rowsGroupedByDate: Map<string, Entry[]> = new Map<string, Entry[]>();
-  const fipsKeyForState: string = req.query.fipsKeyForState;
+  const stateCode: string = req.query.stateCode;
   let dataToProcess = db[`data${req.query.contact}`];
-  if (fipsKeyForState != null) {
+  if (stateCode != null) {
     dataToProcess = db[`data${req.query.contact}`].filter(
-      row => row.fips.startsWith(fipsKeyForState)
+      row => row.county.endsWith(stateCode)
     );
   }
   dataToProcess.forEach(row => {
