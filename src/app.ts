@@ -6,7 +6,7 @@ import cors from "cors";
 import { mapOwn, toSeries } from "./util";
 import { StackedChartData } from "./models/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
-import { PERCENTILEGROUPS } from "./chartconfiguration/stackedchartconfiguration";
+import { PERCENTILE_GROUPS } from "./chart-configuration/stackedchart-configuration";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -76,31 +76,40 @@ app.get("/map", (req, res) => {
   } as MapData);
 });
 
-app.get("/stackedchart", (req, res) => {
+app.get("/stacked-chart", (req, res) => {
   const rowsGroupedByDate: Map<string, Entry[]> = new Map<string, Entry[]>();
-  db[`data${req.query.contact}`].forEach(row => {
+  const stateCode: string = req.query.stateCode;
+  let dataToProcess = db[`data${req.query.contact}`];
+  if (stateCode != null) {
+    dataToProcess = db[`data${req.query.contact}`].filter(
+      row => row.county.endsWith(stateCode)
+    );
+  }
+  dataToProcess.forEach(row => {
     if (rowsGroupedByDate.has(row.Date)) {
-      const _toAppend = rowsGroupedByDate.get(row.Date)
+      const _toAppend = rowsGroupedByDate.get(row.Date);
       _toAppend.push(row);
       rowsGroupedByDate.set(row.Date, _toAppend);
     } else {
       rowsGroupedByDate.set(row.Date, [row]);
     }
-  })
+  });
 
-  const allCharts: any[] = PERCENTILEGROUPS.map(group => {
+  const allCharts: any[] = PERCENTILE_GROUPS.map(group => {
     const stackedChart: StackedChartData = {
       xAxisData: Array.from(rowsGroupedByDate.keys()),
       title: group.title,
       xAxisLabel: group.xAxisLabel,
       yAxisLabel: group.yAxisLabel,
-      charts: toSeries(group.charts, rowsGroupedByDate)
-    }
-    return {...stackedChart, type: group.type};
-  })
-  const response = allCharts.filter(chart => chart.resourceType == req.query.resourceType);
+      charts: toSeries(group.charts, rowsGroupedByDate),
+    };
+    return { ...stackedChart, type: group.type };
+  });
+  const response = allCharts.filter(
+    chart => chart.type == req.query.type
+  );
   res.send(response);
-})
+});
 
 app.listen(HTTP_PORT, () => {
   console.log(`Express HTTP server listening on port ${HTTP_PORT}`);
