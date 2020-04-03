@@ -106,7 +106,7 @@ app.get("/stacked-chart", (req, res) => {
     return { ...stackedChart, type: group.type };
   });
   const response = allCharts.filter(
-    chart => chart.resourceType == req.query.resourceType
+    chart => chart.type == req.query.type
   );
   res.send(response);
 });
