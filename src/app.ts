@@ -6,7 +6,7 @@ import cors from "cors";
 import { mapOwn, toSeries } from "./util";
 import { StackedChartData } from "./models/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
-import { PERCENTILEGROUPS } from "./chartconfiguration/stackedchartconfiguration";
+import { PERCENTILE_GROUPS } from "./chart-configuration/stackedchart-configuration";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -95,7 +95,7 @@ app.get("/stacked-chart", (req, res) => {
     }
   });
 
-  const allCharts: any[] = PERCENTILEGROUPS.map(group => {
+  const allCharts: any[] = PERCENTILE_GROUPS.map(group => {
     const stackedChart: StackedChartData = {
       xAxisData: Array.from(rowsGroupedByDate.keys()),
       title: group.title,

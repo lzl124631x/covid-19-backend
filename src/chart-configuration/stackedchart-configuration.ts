@@ -1,4 +1,4 @@
-export const PERCENTILEGROUPS = [
+export const PERCENTILE_GROUPS = [
     {
       type: "hosp_need",
       title: "Hospital beds needed",
