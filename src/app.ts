@@ -7,8 +7,10 @@ import { mapOwn, toSeries } from "./util";
 import { StackedChartData } from "./models/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { PERCENTILEGROUPS } from "./chartconfiguration/stackedchartconfiguration";
+import { FipsData } from "./models/fipsdata";
 
 let db: { [key: string]: Entry[] } = {};
+let fipsdata: FipsData[] = [];
 const csvFiles = [
   {
     key: "data50",
@@ -23,6 +25,17 @@ const csvFiles = [
     file: "bed_nointervention.csv",
   },
 ];
+
+csv(fs.readFileSync(`./csv/fips.csv`), { columns: true }, (err, output) => {
+  fipsdata = Array.from<any>(output).map(row => {
+    const _tranform: FipsData = {
+      stateName: row.state_name,
+      stateCode: row.state_code,
+      fipsCode: row.fips_code,
+    };
+    return _tranform;
+  });
+});
 
 csvFiles.forEach(item =>
   csv(
@@ -40,6 +53,10 @@ const HTTP_PORT = 6789;
 
 app.get("/", (req, res) => {
   res.send("Express is up!");
+});
+
+app.get("/fips-data", (req, res) => {
+  res.send(fipsdata);
 });
 
 app.get("/dates", (req, res) => {
@@ -76,17 +93,24 @@ app.get("/map", (req, res) => {
   } as MapData);
 });
 
-app.get("/stackedchart", (req, res) => {
+app.get("/stacked-chart", (req, res) => {
   const rowsGroupedByDate: Map<string, Entry[]> = new Map<string, Entry[]>();
-  db[`data${req.query.contact}`].forEach(row => {
+  const fipsKeyForState: string = req.query.fipsKeyForState;
+  let dataToProcess = db[`data${req.query.contact}`];
+  if (fipsKeyForState != null) {
+    dataToProcess = db[`data${req.query.contact}`].filter(
+      row => row.fips.startsWith(fipsKeyForState)
+    );
+  }
+  dataToProcess.forEach(row => {
     if (rowsGroupedByDate.has(row.Date)) {
-      const _toAppend = rowsGroupedByDate.get(row.Date)
+      const _toAppend = rowsGroupedByDate.get(row.Date);
       _toAppend.push(row);
       rowsGroupedByDate.set(row.Date, _toAppend);
     } else {
       rowsGroupedByDate.set(row.Date, [row]);
     }
-  })
+  });
 
   const allCharts: any[] = PERCENTILEGROUPS.map(group => {
     const stackedChart: StackedChartData = {
@@ -94,13 +118,15 @@ app.get("/stackedchart", (req, res) => {
       title: group.title,
       xAxisLabel: group.xAxisLabel,
       yAxisLabel: group.yAxisLabel,
-      charts: toSeries(group.charts, rowsGroupedByDate)
-    }
-    return {...stackedChart, type: group.type};
-  })
-  const response = allCharts.filter(chart => chart.resourceType == req.query.resourceType);
+      charts: toSeries(group.charts, rowsGroupedByDate),
+    };
+    return { ...stackedChart, type: group.type };
+  });
+  const response = allCharts.filter(
+    chart => chart.resourceType == req.query.resourceType
+  );
   res.send(response);
-})
+});
 
 app.listen(HTTP_PORT, () => {
   console.log(`Express HTTP server listening on port ${HTTP_PORT}`);
