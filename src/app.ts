@@ -8,12 +8,6 @@ import { StackedChartData } from "./payloads/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { PERCENTILE_GROUPS } from "./chart-configuration/stackedchart-configuration";
 import { RANGEDATA_GROUPS_CONFIGURATION } from "./chart-configuration/range-timeseries-data-configuration";
-import {
-  ChartingMetadata,
-  RangeData,
-  RangeDefinition,
-} from "./payloads/range-timeseries-data";
-import moment from "moment";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -96,7 +90,7 @@ app.get("/range-timeseries-data", (req, res) => {
     }
 
     dataToProcess.forEach((row) => {
-      const timestamp = moment(row.Date, "MM/DD/YYYY").unix() * 1000;
+      const timestamp = new Date(row.Date).getTime();
       if (rowsGroupedByDate.has(timestamp)) {
         const _toAppend = rowsGroupedByDate.get(timestamp);
         _toAppend.push(row);

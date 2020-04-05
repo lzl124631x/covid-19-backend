@@ -33,11 +33,6 @@ export const RANGEDATA_GROUPS_CONFIGURATION = [
         },
       },
     ],
-    chartingMetadata: {
-      title: "Hospital beds needed",
-      xAxisLabel: "Dates",
-      yAxisLabel: "Number of beds (logarithmic scale)",
-    },
   },
   {
     type: "vent_need",
@@ -72,12 +67,7 @@ export const RANGEDATA_GROUPS_CONFIGURATION = [
           columnName: "Date",
         },
       },
-    ],
-    chartingMetadata: {
-      title: "Ventilators beds needed",
-      xAxisLabel: "Dates",
-      yAxisLabel: "Number of ventilators (logarithmic scale)",
-    },
+    ]
   },
   {
     type: "ICU_need",
@@ -112,12 +102,7 @@ export const RANGEDATA_GROUPS_CONFIGURATION = [
           columnName: "Date",
         },
       },
-    ],
-    chartingMetadata: {
-      title: "ICU's needed",
-      xAxisLabel: "Dates",
-      yAxisLabel: "Number of ICU's (logarithmic scale)",
-    },
+    ]
   },
   {
     type: "death",
@@ -152,11 +137,6 @@ export const RANGEDATA_GROUPS_CONFIGURATION = [
           columnName: "Date",
         },
       },
-    ],
-    chartingMetadata: {
-      title: "Deaths",
-      xAxisLabel: "Dates",
-      yAxisLabel: "Number of deaths (logarithmic scale)",
-    },
+    ]
   }
 ];

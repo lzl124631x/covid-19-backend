@@ -1,6 +1,6 @@
 import { Entry } from "./type";
 import { ChartData, ChartSeriesMetadata } from "./payloads/stackedchart";
-import { RangeData, RangeDefinition, ChartingMetadata } from "./payloads/range-timeseries-data";
+import { RangeData, RangeDefinition } from "./payloads/range-timeseries-data";
 
 export function forOwn<T>(
   obj: { [key: string]: T },
@@ -46,11 +46,6 @@ export function toRangeTimeSeriesData(
   config: any,
   rowsGroupedByDate: Map<number, Entry[]>
 ) {
-  const chartingMetadata: ChartingMetadata = {
-    title: config.chartingMetadata.title,
-    xAxisLabel: config.chartingMetadata.xAxisLabel,
-    yAxisLabel: config.chartingMetadata.yAxisLabel,
-  };
   const timeSeries: number[] = [...rowsGroupedByDate.keys()];
 
   const output: RangeDefinition[] = [];
@@ -86,12 +81,8 @@ export function toRangeTimeSeriesData(
     output.push(rangeDefintion);
   });
   const rangeData: RangeData = {
-    chartingMetadata,
     timeSeries,
     data: output,
   };
-  rangeData.chartingMetadata.title =
-    rangeData.chartingMetadata.title +
-    ` for ${100 - parseInt(key.replace("data", ""))}% intervention`;
-  return { ...rangeData, type: config.type };
+  return { ...rangeData, type: config.type, intervention: key.replace("data","") };
 }

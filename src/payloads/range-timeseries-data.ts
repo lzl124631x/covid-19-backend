@@ -1,13 +1,6 @@
 export interface RangeData {
   data: RangeDefinition[];
   timeSeries: number[];
-  chartingMetadata: ChartingMetadata;
-}
-
-export interface ChartingMetadata {
-  title: string;
-  xAxisLabel: string;
-  yAxisLabel: string;
 }
 
 export interface RangeDefinition {
