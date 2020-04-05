@@ -3,16 +3,16 @@ import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
 
-import { mapOwn, toSeries } from "./util";
-import { StackedChartData } from "./models/stackedchart";
+import { mapOwn, toSeries, toRangeTimeSeriesData } from "./util";
+import { StackedChartData } from "./payloads/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { PERCENTILE_GROUPS } from "./chart-configuration/stackedchart-configuration";
-import { RANGEDATA_GROUPS_CONFIGURATION } from "./chart-configuration/range-data-configuration";
+import { RANGEDATA_GROUPS_CONFIGURATION } from "./chart-configuration/range-timeseries-data-configuration";
 import {
   ChartingMetadata,
   RangeData,
   RangeDefinition,
-} from "./models/range-data";
+} from "./payloads/range-timeseries-data";
 import moment from "moment";
 
 let db: { [key: string]: Entry[] } = {};
@@ -84,93 +84,33 @@ app.get("/map", (req, res) => {
 });
 
 app.get("/range-timeseries-data", (req, res) => {
-  let dataToProcess = db[`data${req.query.contact}`];
-  const rowsGroupedByDate: Map<number, Entry[]> = new Map<number, Entry[]>();
-  const stateCode: string = req.query.stateCode;
-  if (stateCode != null) {
-    dataToProcess = db[`data${req.query.contact}`].filter((row) =>
-      row.county.endsWith(stateCode)
-    );
-  }
-
-  dataToProcess.forEach((row) => {
-    const timestamp = moment(row.Date, "MM/DD/YYYY").unix() * 1000;
-    if (rowsGroupedByDate.has(timestamp)) {
-      const _toAppend = rowsGroupedByDate.get(timestamp);
-      _toAppend.push(row);
-      rowsGroupedByDate.set(timestamp, _toAppend);
-    } else {
-      rowsGroupedByDate.set(timestamp, [row]);
+  let keys:string[] = Object.keys(db);
+  const dataForAllInterventions =  keys.map((key) => {
+    let dataToProcess = db[key];
+    const rowsGroupedByDate: Map<number, Entry[]> = new Map<number, Entry[]>();
+    const stateCode: string = req.query.stateCode;
+    if (stateCode != null) {
+      dataToProcess = dataToProcess.filter((row) =>
+        row.county.endsWith(stateCode)
+      );
     }
-  });
 
-  const allData = RANGEDATA_GROUPS_CONFIGURATION.map((config) => {
-    const chartingMetadata: ChartingMetadata = {
-      title: config.chartingMetadata.title,
-      xAxisLabel: config.chartingMetadata.xAxisLabel,
-      yAxisLabel: config.chartingMetadata.yAxisLabel,
-    };
-    const timeSeries: number[] = [...rowsGroupedByDate.keys()];
-
-    const output: RangeDefinition[] = [];
-    config.ranges.forEach((rangeConfig) => {
-      const rangeDefintion: RangeDefinition = {
-        lower: {
-          id: rangeConfig.lower.id,
-          value: [],
-        },
-        upper: {
-          id: rangeConfig.upper.id,
-          value: [],
-        },
-        average: {
-          id: rangeConfig.average != null ? rangeConfig.average.id : null,
-          value: [],
-        },
-      };
-      const lowerColumn = rangeConfig.lower.columnName;
-      const upperColumn = rangeConfig.upper.columnName;
-      const averagecolumn =
-        rangeConfig.average != null ? rangeConfig.average.columnName : null;
-
-      rangeDefintion.lower.value = Array.from(rowsGroupedByDate.values()).map(
-        (rows) => {
-          return (
-            rows.map((_) => parseInt(_[lowerColumn])).reduce((a, b) => a + b)
-            
-          );
-        }
-      );
-      if (averagecolumn) {
-        rangeDefintion.average.value = Array.from(
-          rowsGroupedByDate.values()
-        ).map((rows) => {
-          return (
-            rows
-              .map((_) => parseInt(_[averagecolumn]))
-              .reduce((a, b) => a + b)
-          );
-        });
+    dataToProcess.forEach((row) => {
+      const timestamp = moment(row.Date, "MM/DD/YYYY").unix() * 1000;
+      if (rowsGroupedByDate.has(timestamp)) {
+        const _toAppend = rowsGroupedByDate.get(timestamp);
+        _toAppend.push(row);
+        rowsGroupedByDate.set(timestamp, _toAppend);
+      } else {
+        rowsGroupedByDate.set(timestamp, [row]);
       }
-      rangeDefintion.upper.value = Array.from(rowsGroupedByDate.values()).map(
-        (rows) => {
-          return (
-            rows.map((_) => parseInt(_[upperColumn])).reduce((a, b) => a + b)
-          );
-        }
-      );
-      output.push(rangeDefintion);
     });
-    const rangeData: RangeData = {
-      chartingMetadata,
-      timeSeries,
-      data: output,
-    };
 
-    return { ...rangeData, type: config.type };
+    return RANGEDATA_GROUPS_CONFIGURATION.map((config) => toRangeTimeSeriesData(key, config, rowsGroupedByDate));
   });
 
-  res.send(allData.filter((_) => _.type == req.query.type));
+  const response = dataForAllInterventions.reduce((d1, d2) => d1.concat(d2));
+  res.send(response.filter((_) => _.type == req.query.type));
 });
 
 app.get("/stacked-chart", (req, res) => {
