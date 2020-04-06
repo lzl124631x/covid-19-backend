@@ -84,5 +84,5 @@ export function toRangeTimeSeriesData(
     timeSeries,
     data: output,
   };
-  return { ...rangeData, type: config.type, intervention: key.replace("data","") };
+  return { ...rangeData, type: config.type, contact: key.replace("data", "") };
 }

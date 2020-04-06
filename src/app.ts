@@ -12,16 +12,16 @@ import { RANGEDATA_GROUPS_CONFIGURATION } from "./chart-configuration/range-time
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
   {
-    key: "data50",
-    file: "bed_50contact.csv",
+    key: "data100",
+    file: "bed_nointervention.csv",
   },
   {
     key: "data75",
     file: "bed_75contact.csv",
   },
   {
-    key: "data100",
-    file: "bed_nointervention.csv",
+    key: "data50",
+    file: "bed_50contact.csv",
   },
 ];
 
@@ -78,8 +78,8 @@ app.get("/map", (req, res) => {
 });
 
 app.get("/range-timeseries-data", (req, res) => {
-  let keys:string[] = Object.keys(db);
-  const dataForAllInterventions =  keys.map((key) => {
+  let keys: string[] = Object.keys(db);
+  const dataForAllInterventions = keys.map((key) => {
     let dataToProcess = db[key];
     const rowsGroupedByDate: Map<number, Entry[]> = new Map<number, Entry[]>();
     const stateCode: string = req.query.stateCode;
@@ -100,7 +100,9 @@ app.get("/range-timeseries-data", (req, res) => {
       }
     });
 
-    return RANGEDATA_GROUPS_CONFIGURATION.map((config) => toRangeTimeSeriesData(key, config, rowsGroupedByDate));
+    return RANGEDATA_GROUPS_CONFIGURATION.map((config) =>
+      toRangeTimeSeriesData(key, config, rowsGroupedByDate)
+    );
   });
 
   const response = dataForAllInterventions.reduce((d1, d2) => d1.concat(d2));
