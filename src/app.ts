@@ -11,7 +11,7 @@ import {
   TimeSeriesData,
   ContactData,
   PercentileData,
-} from "./payloads/range-timeseries-data";
+} from "./payloads/timeseries-data";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -123,11 +123,20 @@ app.get("/timeseries-data", (req, res) => {
       };
     });
   const contactData = getContactData();
+  let maxValue = 0;
+  contactData.forEach((cd) =>
+    cd.percentileData.forEach((pd) =>
+      pd.data.forEach((v) => {
+        if (v > maxValue) maxValue = v;
+      })
+    )
+  );
   const timeSeriesData: TimeSeriesData = {
     contactData,
     stateCode,
     timeSeries: Array.from(rowsGroupedByDate.keys()),
     type,
+    maxValue,
   };
 
   res.send(timeSeriesData);

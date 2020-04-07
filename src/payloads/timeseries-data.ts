@@ -3,6 +3,7 @@ export interface TimeSeriesData {
   timeSeries: number[];
   stateCode: string;
   type: string;
+  maxValue: number;
 }
 
 export interface ContactData {

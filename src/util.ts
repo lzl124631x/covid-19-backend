@@ -1,6 +1,6 @@
 import { Entry } from "./type";
 import { ChartData, ChartSeriesMetadata } from "./payloads/stackedchart";
-import { TimeSeriesData, PercentileData, ContactData } from "./payloads/range-timeseries-data";
+import { TimeSeriesData, PercentileData, ContactData } from "./payloads/timeseries-data";
 
 export function forOwn<T>(
   obj: { [key: string]: T },
