@@ -3,11 +3,15 @@ import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
 
-import { mapOwn, toSeries, toRangeTimeSeriesData } from "./util";
+import { mapOwn, toSeries } from "./util";
 import { StackedChartData } from "./payloads/stackedchart";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { PERCENTILE_GROUPS } from "./chart-configuration/stackedchart-configuration";
-import { RANGEDATA_GROUPS_CONFIGURATION } from "./chart-configuration/range-timeseries-data-configuration";
+import {
+  TimeSeriesData,
+  ContactData,
+  PercentileData,
+} from "./payloads/range-timeseries-data";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -77,41 +81,61 @@ app.get("/map", (req, res) => {
   } as MapData);
 });
 
-app.get("/range-timeseries-data", (req, res) => {
-  let keys: string[] = Object.keys(db);
-  const dataForAllInterventions = keys.map((key) => {
-    let dataToProcess = db[key];
-    const rowsGroupedByDate: Map<number, Entry[]> = new Map<number, Entry[]>();
-    const stateCode: string = req.query.stateCode;
-    if (stateCode != null) {
-      dataToProcess = dataToProcess.filter((row) =>
-        row.county.endsWith(stateCode)
-      );
-    }
+app.get("/timeseries-data", (req, res) => {
+  const contacts = Object.keys(db);
+  const stateCode = req.query.stateCode;
+  const type: string = req.query.type;
+  const percentiles = ["2.5", "25", "50", "75", "97.5"];
 
-    dataToProcess.forEach((row) => {
-      const timestamp = new Date(row.Date).getTime();
-      if (rowsGroupedByDate.has(timestamp)) {
-        const _toAppend = rowsGroupedByDate.get(timestamp);
-        _toAppend.push(row);
-        rowsGroupedByDate.set(timestamp, _toAppend);
-      } else {
-        rowsGroupedByDate.set(timestamp, [row]);
+  const rowsGroupedByDate: Map<number, Entry[]> = new Map<number, Entry[]>();
+  const getContactData = (): ContactData[] =>
+    contacts.map((contact) => {
+      let dataToProcess = db[contact];
+      if (stateCode != null) {
+        dataToProcess = dataToProcess.filter((row) =>
+          row.county.endsWith(stateCode)
+        );
       }
+      const populateRowsGroupByDate = () =>
+        dataToProcess.forEach((row) => {
+          const timestamp = new Date(row.Date).getTime();
+          if (rowsGroupedByDate.has(timestamp)) {
+            const _toAppend = rowsGroupedByDate.get(timestamp);
+            _toAppend.push(row);
+            rowsGroupedByDate.set(timestamp, _toAppend);
+          } else {
+            rowsGroupedByDate.set(timestamp, [row]);
+          }
+        });
+
+      populateRowsGroupByDate();
+      const aggregate = (percentile: string): number[] =>
+        Array.from(rowsGroupedByDate.values()).map((rows) =>
+          rows
+            .map((_) => parseInt(_[`${type}_${percentile}`]))
+            .reduce((a, b) => a + b)
+        );
+      return {
+        contact,
+        percentileData: percentiles.map((percentile) => {
+          return { percentile, data: aggregate(percentile) };
+        }),
+      };
     });
+  const contactData = getContactData();
+  const timeSeriesData: TimeSeriesData = {
+    contactData,
+    stateCode,
+    timeSeries: Array.from(rowsGroupedByDate.keys()),
+    type,
+  };
 
-    return RANGEDATA_GROUPS_CONFIGURATION.map((config) =>
-      toRangeTimeSeriesData(key, config, rowsGroupedByDate)
-    );
-  });
-
-  const response = dataForAllInterventions.reduce((d1, d2) => d1.concat(d2));
-  res.send(response.filter((_) => _.type == req.query.type));
+  res.send(timeSeriesData);
 });
 
 app.get("/stacked-chart", (req, res) => {
   const rowsGroupedByDate: Map<string, Entry[]> = new Map<string, Entry[]>();
-  const stateCode: string = req.query.stateCode;
+  const stateCode: string = req.query.state;
   let dataToProcess = db[`data${req.query.contact}`];
   if (stateCode != null) {
     dataToProcess = db[`data${req.query.contact}`].filter((row) =>
