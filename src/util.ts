@@ -1,6 +1,4 @@
 import { Entry } from "./type";
-import { ChartData, ChartSeriesMetadata } from "./payloads/stackedchart";
-import { TimeSeriesData, PercentileData, ContactData } from "./payloads/timeseries-data";
 
 export function forOwn<T>(
   obj: { [key: string]: T },
@@ -20,23 +18,4 @@ export function mapOwn<T>(
     arr.push(iteratee(val, key));
   });
   return arr;
-}
-
-export function toSeries(
-  charts: ChartSeriesMetadata[],
-  rowsGroupedByDate: Map<string, Entry[]>
-): ChartData[] {
-  const output: ChartData[] = [];
-  charts.forEach((chart) => {
-    const data: number[] = Array.from(rowsGroupedByDate.values()).map((rows) =>
-      rows.map((row) => parseInt(row[chart.column])).reduce((a, b) => a + b)
-    );
-    const seriesData: ChartData = {
-      name: chart.name,
-      data: data,
-    };
-    output.push(seriesData);
-  });
-
-  return output;
 }

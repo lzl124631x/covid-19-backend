@@ -2,15 +2,11 @@ import express from "express";
 import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
-
-import { mapOwn, toSeries } from "./util";
-import { StackedChartData } from "./payloads/stackedchart";
+import { mapOwn } from "./util";
 import { Entry, MapDataEntry, MapData } from "./type";
-import { PERCENTILE_GROUPS } from "./chart-configuration/stackedchart-configuration";
 import {
   TimeSeriesData,
   ContactData,
-  PercentileData,
 } from "./payloads/timeseries-data";
 
 let db: { [key: string]: Entry[] } = {};
@@ -140,39 +136,6 @@ app.get("/timeseries-data", (req, res) => {
   };
 
   res.send(timeSeriesData);
-});
-
-app.get("/stacked-chart", (req, res) => {
-  const rowsGroupedByDate: Map<string, Entry[]> = new Map<string, Entry[]>();
-  const stateCode: string = req.query.state;
-  let dataToProcess = db[`data${req.query.contact}`];
-  if (stateCode != null) {
-    dataToProcess = db[`data${req.query.contact}`].filter((row) =>
-      row.county.endsWith(stateCode)
-    );
-  }
-  dataToProcess.forEach((row) => {
-    if (rowsGroupedByDate.has(row.Date)) {
-      const _toAppend = rowsGroupedByDate.get(row.Date);
-      _toAppend.push(row);
-      rowsGroupedByDate.set(row.Date, _toAppend);
-    } else {
-      rowsGroupedByDate.set(row.Date, [row]);
-    }
-  });
-
-  const allCharts: any[] = PERCENTILE_GROUPS.map((group) => {
-    const stackedChart: StackedChartData = {
-      xAxisData: Array.from(rowsGroupedByDate.keys()),
-      title: group.title,
-      xAxisLabel: group.xAxisLabel,
-      yAxisLabel: group.yAxisLabel,
-      charts: toSeries(group.charts, rowsGroupedByDate),
-    };
-    return { ...stackedChart, type: group.type };
-  });
-  const response = allCharts.filter((chart) => chart.type == req.query.type);
-  res.send(response);
 });
 
 app.listen(HTTP_PORT, () => {
