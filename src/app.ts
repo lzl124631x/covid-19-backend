@@ -2,7 +2,7 @@ import express from "express";
 import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
-import { mapOwn, mapMap } from "./util";
+import { mapMap } from "./util";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { TimeSeriesData, ContactData } from "./payloads/timeseries-data";
 
