@@ -1,4 +1,5 @@
 export interface Entry {
+  contact: string;
   county: string;
   fips: string;
   Date: string;
