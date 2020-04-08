@@ -1,26 +1,30 @@
 import express from "express";
 import csv from "csv-parse";
 import fs from "fs";
+import path from "path";
 import cors from "cors";
 import { mapMap } from "./util";
 import { Entry, MapDataEntry, MapData } from "./type";
 import { TimeSeriesData, ContactData } from "./payloads/timeseries-data";
 
 let db: { [key: string]: Entry[] } = {};
-const csvFiles = [
-  {
-    key: "data100",
-    file: "bed_nointervention.csv",
-  },
-  {
-    key: "data75",
-    file: "bed_75contact.csv",
-  },
-  {
-    key: "data50",
-    file: "bed_50contact.csv",
-  },
-];
+
+const csvFilenames = fs
+  .readdirSync("csv")
+  .filter((name) => path.extname(name).toLocaleLowerCase() === ".csv");
+
+function getFileKey(name: string): string {
+  return name
+    .replace("bed_", "")
+    .replace(".csv", "")
+    .replace("contact", "")
+    .replace("nointerv", "100");
+}
+
+const csvFiles = csvFilenames.map((name) => ({
+  key: getFileKey(name),
+  file: name,
+}));
 
 csvFiles.forEach((item) =>
   csv(
@@ -40,6 +44,10 @@ app.get("/", (req, res) => {
   res.send("Express is up!");
 });
 
+app.get("/contacts", (req, res) => {
+  res.send(csvFiles.map((x) => x.key));
+});
+
 app.get("/dates", (req, res) => {
   let m = new Set<string>();
   db[csvFiles[0].key].forEach((row) => m.add(row.Date));
@@ -50,7 +58,7 @@ app.get("/dates", (req, res) => {
 app.get("/map", (req, res) => {
   let mapByDate = new Map<string, Entry[]>();
   const field: string = req.query.field;
-  db[`data${req.query.contact}`].forEach((row) => {
+  db[req.query.contact].forEach((row) => {
     if (!mapByDate.has(row.Date)) mapByDate.set(row.Date, []);
     mapByDate.get(row.Date).push(row);
   });
