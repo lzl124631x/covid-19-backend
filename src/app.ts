@@ -2,12 +2,9 @@ import express from "express";
 import csv from "csv-parse";
 import fs from "fs";
 import cors from "cors";
-import { mapOwn } from "./util";
+import { mapOwn, mapMap } from "./util";
 import { Entry, MapDataEntry, MapData } from "./type";
-import {
-  TimeSeriesData,
-  ContactData,
-} from "./payloads/timeseries-data";
+import { TimeSeriesData, ContactData } from "./payloads/timeseries-data";
 
 let db: { [key: string]: Entry[] } = {};
 const csvFiles = [
@@ -44,32 +41,36 @@ app.get("/", (req, res) => {
 });
 
 app.get("/dates", (req, res) => {
-  let m: { [key: string]: number } = {};
-  db[csvFiles[0].key].forEach((row) => (m[row.Date] = 1));
-  const dates = Object.keys(m);
+  let m = new Set<string>();
+  db[csvFiles[0].key].forEach((row) => m.add(row.Date));
+  const dates = Array.from(m);
   res.send(dates);
 });
 
 app.get("/map", (req, res) => {
-  let mapByDate: { [key: string]: Entry[] } = {};
+  let mapByDate = new Map<string, Entry[]>();
   const field: string = req.query.field;
   db[`data${req.query.contact}`].forEach((row) => {
-    if (!(row.Date in mapByDate)) mapByDate[row.Date] = [];
-    mapByDate[row.Date].push(row);
+    if (!mapByDate.has(row.Date)) mapByDate.set(row.Date, []);
+    mapByDate.get(row.Date).push(row);
   });
-  const data: MapDataEntry[] = mapOwn(mapByDate, (entries, date) => {
-    let mapByState: { [key: string]: number } = {};
+  const data: MapDataEntry[] = mapMap(mapByDate, (entries, date) => {
+    let mapByState = new Map<string, number>();
     entries.forEach((entry) => {
       const parts = entry.county.split(" ");
       const state = `us-${parts[parts.length - 1].toLocaleLowerCase()}`;
-      if (!(state in mapByState)) mapByState[state] = 0;
-      mapByState[state] += +entry[field];
+      if (!mapByState.has(state)) mapByState.set(state, 0);
+      mapByState.set(state, mapByState.get(state) + +entry[field]);
     });
-    return [date, mapOwn(mapByState, (val, state) => [state, val])];
+    return [date, mapMap(mapByState, (val, state) => [state, val])];
   });
-  let maxValue = 0;
-  data.forEach((entry) =>
-    entry[1].forEach((state) => (maxValue = Math.max(maxValue, state[1])))
+  const maxValue = data.reduce(
+    (mx, entry) =>
+      Math.max(
+        mx,
+        entry[1].reduce((mx, state) => Math.max(mx, state[1]), 0)
+      ),
+    0
   );
   res.send({
     data,
