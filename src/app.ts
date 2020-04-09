@@ -91,34 +91,42 @@ app.get("/timeseries-data", (req, res) => {
   const stateCode = req.query.stateCode;
   const type: string = req.query.type;
   const percentiles = ["2.5", "25", "50", "75", "97.5"];
+  type OrderedEntry = {
+    timestamp: number;
+    entries: Entry[];
+  };
+  let rowsGroupedByDate: OrderedEntry[];
 
-  const rowsGroupedByDate: Map<number, Entry[]> = new Map<number, Entry[]>();
   const getContactData = (): ContactData[] =>
     contacts.map((contact) => {
+      rowsGroupedByDate = [];
       let dataToProcess = db[contact];
       if (stateCode != null) {
         dataToProcess = dataToProcess.filter((row) =>
           row.county.endsWith(stateCode)
         );
       }
+      console.log(dataToProcess.map(_ => _.county));
       const populateRowsGroupByDate = () =>
         dataToProcess.forEach((row) => {
           const timestamp = new Date(row.Date).getTime();
-          if (rowsGroupedByDate.has(timestamp)) {
-            const _toAppend = rowsGroupedByDate.get(timestamp);
-            _toAppend.push(row);
-            rowsGroupedByDate.set(timestamp, _toAppend);
+          const orderedEntry = rowsGroupedByDate.find(
+            (_) => _.timestamp === timestamp
+          );
+          if (orderedEntry != null) {
+            orderedEntry.entries.push(row);
           } else {
-            rowsGroupedByDate.set(timestamp, [row]);
+            rowsGroupedByDate.push({ timestamp, entries: [row] });
           }
         });
 
       populateRowsGroupByDate();
       const aggregate = (percentile: string): number[] =>
-        Array.from(rowsGroupedByDate.values()).map((rows) =>
-          rows
-            .map((_) => parseInt(_[`${type}_${percentile}`]))
-            .reduce((a, b) => a + b)
+        Array.from(
+          rowsGroupedByDate.map((_) =>
+            _.entries.map((_) => parseInt(_[`${type}_${percentile}`]))
+            .reduce((a,b) => a + b)
+          )
         );
       return {
         contact,
@@ -139,7 +147,7 @@ app.get("/timeseries-data", (req, res) => {
   const timeSeriesData: TimeSeriesData = {
     contactData,
     stateCode,
-    timeSeries: Array.from(rowsGroupedByDate.keys()),
+    timeSeries: rowsGroupedByDate.map((_) => _.timestamp),
     type,
     maxValue,
   };
