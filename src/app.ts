@@ -106,7 +106,6 @@ app.get("/timeseries-data", (req, res) => {
           row.county.endsWith(stateCode)
         );
       }
-      console.log(dataToProcess.map(_ => _.county));
       const populateRowsGroupByDate = () =>
         dataToProcess.forEach((row) => {
           const timestamp = new Date(row.Date).getTime();
@@ -124,8 +123,9 @@ app.get("/timeseries-data", (req, res) => {
       const aggregate = (percentile: string): number[] =>
         Array.from(
           rowsGroupedByDate.map((_) =>
-            _.entries.map((_) => parseInt(_[`${type}_${percentile}`]))
-            .reduce((a,b) => a + b)
+            _.entries
+              .map((_) => parseInt(_[`${type}_${percentile}`]))
+              .reduce((a, b) => a + b)
           )
         );
       return {
