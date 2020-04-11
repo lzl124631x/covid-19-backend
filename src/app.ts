@@ -90,7 +90,7 @@ app.get("/timeseries-data", (req, res) => {
   const contacts = Object.keys(db);
   const stateCode = req.query.stateCode;
   const type: string = req.query.type;
-  const percentiles = ["2.5", "25", "50", "75", "97.5"];
+  //const percentiles = ["2.5", "25", "50", "75", "97.5"];
   type OrderedEntry = {
     timestamp: number;
     entries: Entry[];
@@ -101,6 +101,11 @@ app.get("/timeseries-data", (req, res) => {
     contacts.map((contact) => {
       rowsGroupedByDate = [];
       let dataToProcess = db[contact];
+      const percentiles = Object.keys(dataToProcess)
+        .filter((key) => key.startsWith(type))
+        .map((key) => parseInt(key.replace(`${type}_`, "")))
+        .sort()
+        .map(toString);
       if (stateCode != null) {
         dataToProcess = dataToProcess.filter((row) =>
           row.county.endsWith(stateCode)
@@ -110,7 +115,7 @@ app.get("/timeseries-data", (req, res) => {
         dataToProcess.forEach((row) => {
           const timestamp = new Date(row.Date).getTime();
           const orderedEntry = rowsGroupedByDate.find(
-            (_) => _.timestamp === timestamp
+            (oe) => oe.timestamp === timestamp
           );
           if (orderedEntry != null) {
             orderedEntry.entries.push(row);
@@ -122,9 +127,9 @@ app.get("/timeseries-data", (req, res) => {
       populateRowsGroupByDate();
       const aggregate = (percentile: string): number[] =>
         Array.from(
-          rowsGroupedByDate.map((_) =>
-            _.entries
-              .map((_) => parseInt(_[`${type}_${percentile}`]))
+          rowsGroupedByDate.map((rows) =>
+            rows.entries
+              .map((row) => parseInt(row[`${type}_${percentile}`]))
               .reduce((a, b) => a + b)
           )
         );
@@ -147,7 +152,7 @@ app.get("/timeseries-data", (req, res) => {
   const timeSeriesData: TimeSeriesData = {
     contactData,
     stateCode,
-    timeSeries: rowsGroupedByDate.map((_) => _.timestamp),
+    timeSeries: rowsGroupedByDate.map((row) => row.timestamp),
     type,
     maxValue,
   };
