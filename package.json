@@ -30,5 +30,9 @@
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   },
-  "dependencies": {}
+  "dependencies": {
+    "request": "^2.88.2",
+    "zip-folder": "^1.0.0",
+    "nodemon": "2.0.3"
+  }
 }

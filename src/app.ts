@@ -38,7 +38,8 @@ csvFiles.forEach((item) =>
 
 const app = express();
 app.use(cors());
-const HTTP_PORT = 6789;
+const HTTP_PORT = process.env.PORT || 6789;
+
 
 app.get("/", (req, res) => {
   res.send("Express is up!");
