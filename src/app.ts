@@ -58,8 +58,9 @@ app.get("/dates", (req, res) => {
 
 app.get("/map", (req, res) => {
   let mapByDate = new Map<string, Entry[]>();
-  const field: string = req.query.field;
-  db[req.query.contact].forEach((row) => {
+  const field: any = req.query.field;
+  const contact: any = req.query.contact;
+  db[contact].forEach((row) => {
     if (!mapByDate.has(row.Date)) mapByDate.set(row.Date, []);
     mapByDate.get(row.Date).push(row);
   });
@@ -89,8 +90,8 @@ app.get("/map", (req, res) => {
 
 app.get("/timeseries-data", (req, res) => {
   const contacts = Object.keys(db);
-  const stateCode = req.query.stateCode;
-  const type: string = req.query.type;
+  const stateCode: any = req.query.stateCode;
+  const type: any = req.query.type;
   const percentiles = ["2.5", "25", "50", "75", "97.5"];
   type OrderedEntry = {
     timestamp: number;
