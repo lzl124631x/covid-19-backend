@@ -1,5 +1,7 @@
 This project contains the code to power the api for covid projections web portal.
 
+Install the stable version of yarn from - https://classic.yarnpkg.com/en/docs/install/#windows-stable
+
 In the project directory, you can:
 
 ### Preferred IDE
