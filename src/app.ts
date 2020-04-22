@@ -37,26 +37,39 @@ csvFiles.forEach((item) =>
 );
 
 const app = express();
+const cacheWithoutExpiration: any = {};
+const cacheMiddleware = (req: any, res: any, next: any) => {
+  let key = `_express_${req.originalUrl || req.url}`;
+  if (cacheWithoutExpiration[key] != null){
+    res.send(cacheWithoutExpiration[key]);
+    return;
+  } else {
+    res.send = (body: any) => {
+      cacheWithoutExpiration[key] = body;
+    }
+    next();
+  }
+}
 app.use(cors());
 const HTTP_PORT = process.env.PORT || 6789;
 
 
-app.get("/", (req, res) => {
+app.get("/", cacheMiddleware, (req, res) => {
   res.send("Express is up!");
 });
 
-app.get("/contacts", (req, res) => {
+app.get("/contacts",cacheMiddleware, (req, res) => {
   res.send(csvFiles.map((x) => x.key));
 });
 
-app.get("/dates", (req, res) => {
+app.get("/dates", cacheMiddleware, (req, res) => {
   let m = new Set<string>();
   db[csvFiles[0].key].forEach((row) => m.add(row.Date));
   const dates = Array.from(m);
   res.send(dates);
 });
 
-app.get("/map", (req, res) => {
+app.get("/map",cacheMiddleware, (req, res) => {
   let mapByDate = new Map<string, Entry[]>();
   const field: any = req.query.field;
   const contact: any = req.query.contact;
@@ -88,7 +101,7 @@ app.get("/map", (req, res) => {
   } as MapData);
 });
 
-app.get("/timeseries-data", (req, res) => {
+app.get("/timeseries-data", cacheMiddleware, (req, res) => {
   const contacts = Object.keys(db);
   const stateCode: any = req.query.stateCode;
   const type: any = req.query.type;
